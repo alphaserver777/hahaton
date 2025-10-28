@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>AXIOM UI</title>
+  <style>body{font-family:sans-serif;margin:2rem}</style>
+  </head>
+<body>
+  <h1>Доступные отчёты</h1>
+  <ul>
+    <li th:if="${#lists.isEmpty(reports)}">Файлы не найдены (сначала выполните сканирование).</li>
+    <li th:each="r : ${reports}"><a th:href="@{'/report/' + ${r}}" th:text="${r}"></a></li>
+  </ul>
+</body>
+</html>
+

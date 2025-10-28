@@ -1,0 +1,32 @@
+target:
+  baseUrl: ${BASE_URL:https://api.bankingapi.ru}
+  openapi: ./specs/example.yaml
+  auth:
+    type: bearer
+    tokens:
+      - role: user
+        value: ${AUTH_TOKEN_USER:}
+      - role: admin
+        value: ${AUTH_TOKEN_ADMIN:}
+execution:
+  concurrency: 8
+  rateLimitRps: 8
+  timeoutMs: 8000
+  retries: 1
+checks:
+  severityThreshold: MEDIUM
+  enableDiscovery: true
+  wordlists:
+    paths: ./wordlists/paths.txt
+    injections: ./wordlists/injections.txt
+contract:
+  strictAdditionalProperties: true
+  validateErrorSchemas: true
+report:
+  outDir: ./dist/out
+  formats: [json, html, pdf]
+ui:
+  enabled: true
+  bind: 0.0.0.0
+  port: 8080
+

@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  ui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - BASE_URL=${BASE_URL}
+      - AUTH_TOKEN_USER=${AUTH_TOKEN_USER}
+      - AUTH_TOKEN_ADMIN=${AUTH_TOKEN_ADMIN}
+    volumes:
+      - ../dist/out:/work/dist/out
+    ports:
+      - "8080:8080"
+    command: ["/work/axiom-cli/bin/axiom-cli", "scan", "--openapi", "/work/specs/example.yaml", "--base-url", "${BASE_URL}", "--config", "/work/axiom.yaml", "--out", "/work/dist/out"]

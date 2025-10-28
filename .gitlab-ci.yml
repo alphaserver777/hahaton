@@ -1,0 +1,33 @@
+image: eclipse-temurin:21
+
+cache:
+  key: gradle-cache
+  paths:
+    - .gradle/
+
+stages:
+  - build
+  - scan
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+build:
+  stage: build
+  script:
+    - ./gradlew :axiom-cli:installDist
+  artifacts:
+    when: always
+    paths:
+      - axiom-cli/build/install/axiom-cli
+
+scan:
+  stage: scan
+  dependencies: ["build"]
+  script:
+    - ./axiom-cli/build/install/axiom-cli/bin/axiom-cli scan --openapi specs/example.yaml --base-url $BASE_URL --config axiom.yaml --out dist/out
+    - ./axiom-cli/build/install/axiom-cli/bin/axiom-cli ci --report dist/out/report.json --fail-on-severity HIGH --max-medium 0
+  artifacts:
+    when: always
+    paths:
+      - dist/out

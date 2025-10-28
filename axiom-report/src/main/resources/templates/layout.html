@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AXIOM Report</title>
+  <style>
+    body{font-family: sans-serif;margin:2rem;color:#222}
+    .sev-HIGH{color:#b00020}.sev-MEDIUM{color:#c77700}.sev-LOW{color:#0b6}
+    .card{border:1px solid #ddd;padding:1rem;margin:1rem 0;border-radius:8px}
+    code,pre{background:#f7f7f7;padding:.25rem .5rem}
+  </style>
+  <th:block th:insert="~{::head}"></th:block>
+</head>
+<body>
+  <header>
+    <h1>AXIOM — Отчёт</h1>
+  </header>
+  <main>
+    <th:block th:insert="~{::content}"></th:block>
+  </main>
+</body>
+</html>
+

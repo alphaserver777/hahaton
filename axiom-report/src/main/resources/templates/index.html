@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru" th:replace="layout :: content">
+<head></head>
+<body>
+<section>
+  <h2>Сводка</h2>
+  <p>
+    High: <span class="sev-HIGH" th:text="${report.summary.high}"></span>
+    &nbsp;| Medium: <span class="sev-MEDIUM" th:text="${report.summary.medium}"></span>
+    &nbsp;| Low: <span class="sev-LOW" th:text="${report.summary.low}"></span>
+  </p>
+  <p>Время: <span th:text="${report.summary.durationMs}"></span> мс, эндпоинтов: <span th:text="${report.summary.endpoints}"></span></p>
+</section>
+
+<section>
+  <h2>Находки</h2>
+  <div th:if="${#lists.isEmpty(report.findings)}">Нет находок.</div>
+  <div th:each="f : ${report.findings}" class="card">
+    <div><strong th:text="${f.id}"></strong> — <span th:text="${f.title}"></span></div>
+    <div>Severity: <span th:text="${f.severity}" th:class="${'sev-'+f.severity}"></span> | Confidence: <span th:text="${f.confidence}"></span></div>
+    <div>Route: <code th:text="${f.route.method + ' ' + f.route.path}"></code></div>
+  </div>
+</section>
+</body>
+</html>
+
