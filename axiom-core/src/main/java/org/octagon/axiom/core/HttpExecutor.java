@@ -49,7 +49,11 @@ public final class HttpExecutor {
       rateSemaphore.acquire();
       acquireRate();
       var t0 = System.currentTimeMillis();
-      var uri = baseUrl.resolve(tc.route().path());
+      // Заменяем шаблонные параметры {id} на безопасные значения
+      String path = tc.route().path();
+      String resolvedPath = path.replaceAll("\\{[^/]+\\}", "1");
+      if (!resolvedPath.startsWith("/")) resolvedPath = "/" + resolvedPath;
+      var uri = baseUrl.resolve(resolvedPath);
       var builder = HttpRequest.newBuilder().uri(uri)
           .timeout(Duration.ofMillis(profile.timeoutMs()));
       String method = tc.route().method().toUpperCase(Locale.ROOT);
@@ -91,4 +95,3 @@ public final class HttpExecutor {
     }
   }
 }
-

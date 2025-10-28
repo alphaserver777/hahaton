@@ -1,26 +1,121 @@
 <!DOCTYPE html>
-<html lang="ru" th:replace="layout :: content">
-<head></head>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AXIOM Report</title>
+  <style>
+    :root{--hi:#b00020;--md:#c77700;--lo:#0b6;--muted:#666}
+    body{font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;margin:2rem;color:#222;line-height:1.45}
+    .sev-badge{display:inline-block;padding:.15rem .5rem;border-radius:.5rem;font-size:.85rem;color:#fff}
+    .sev-HIGH{background:var(--hi)}.sev-MEDIUM{background:var(--md)}.sev-LOW{background:var(--lo)}
+    .muted{color:var(--muted)}
+    .kpi{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:.5rem 0}
+    .kpi div{background:#f7f7f7;border:1px solid #e6e6e6;border-radius:.5rem;padding:.4rem .6rem}
+    .toolbar{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:1rem 0}
+    input[type="search"]{padding:.4rem .6rem;border:1px solid #ccc;border-radius:.4rem;min-width:260px}
+    .filters label{margin-right:.5rem}
+    table{width:100%;border-collapse:collapse;margin-top:.5rem}
+    th,td{border-bottom:1px solid #eee;padding:.5rem .4rem;text-align:left;vertical-align:top}
+    th{font-size:.9rem;color:#444}
+    .route code{background:#f7f7f7;padding:.15rem .35rem;border-radius:.25rem}
+    details{margin:.2rem 0}
+    .no-data{padding:1rem;border:1px dashed #ddd;border-radius:.5rem;background:#fafafa}
+    .actions a{margin-right:.6rem}
+  </style>
+</head>
 <body>
-<section>
-  <h2>Сводка</h2>
-  <p>
-    High: <span class="sev-HIGH" th:text="${report.summary.high}"></span>
-    &nbsp;| Medium: <span class="sev-MEDIUM" th:text="${report.summary.medium}"></span>
-    &nbsp;| Low: <span class="sev-LOW" th:text="${report.summary.low}"></span>
-  </p>
-  <p>Время: <span th:text="${report.summary.durationMs}"></span> мс, эндпоинтов: <span th:text="${report.summary.endpoints}"></span></p>
-</section>
+  <header>
+    <h1>AXIOM — Отчёт по сканированию</h1>
+    <div class="actions muted">
+      <span>Загрузки:</span>
+      <a href="report.json">JSON</a>
+      <a href="report.pdf">PDF</a>
+      <a href="report.html">HTML</a>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2>Сводка</h2>
+      <div class="kpi">
+        <div><span class="sev-badge sev-HIGH">HIGH</span> <strong th:text="${report.summary.high}"></strong></div>
+        <div><span class="sev-badge sev-MEDIUM">MED</span> <strong th:text="${report.summary.medium}"></strong></div>
+        <div><span class="sev-badge sev-LOW">LOW</span> <strong th:text="${report.summary.low}"></strong></div>
+        <div>Время: <strong th:text="${report.summary.durationMs}"></strong> мс</div>
+        <div>Эндпоинтов: <strong th:text="${report.summary.endpoints}"></strong></div>
+      </div>
+      <div class="toolbar">
+        <div class="filters">
+          <label><input type="checkbox" id="fHigh" checked /> HIGH</label>
+          <label><input type="checkbox" id="fMed" checked /> MEDIUM</label>
+          <label><input type="checkbox" id="fLow" checked /> LOW</label>
+        </div>
+        <input type="search" id="q" placeholder="Фильтр по названию/маршруту/тегам" />
+      </div>
+    </section>
 
-<section>
-  <h2>Находки</h2>
-  <div th:if="${#lists.isEmpty(report.findings)}">Нет находок.</div>
-  <div th:each="f : ${report.findings}" class="card">
-    <div><strong th:text="${f.id}"></strong> — <span th:text="${f.title}"></span></div>
-    <div>Severity: <span th:text="${f.severity}" th:class="${'sev-'+f.severity}"></span> | Confidence: <span th:text="${f.confidence}"></span></div>
-    <div>Route: <code th:text="${f.route.method + ' ' + f.route.path}"></code></div>
-  </div>
-</section>
+    <section>
+      <h2>Находки</h2>
+      <div class="no-data" th:if="${#lists.isEmpty(report.findings)}">Нет находок.</div>
+      <table th:if="${!#lists.isEmpty(report.findings)}" id="tbl">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Маршрут</th>
+            <th>Уверенность</th>
+            <th>Теги</th>
+            <th>Детали</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="f : ${report.findings}" th:attr="data-sev=${f.severity}">
+            <td><span class="sev-badge" th:text="${f.severity}" th:classappend=" ${'sev-'+f.severity}"></span></td>
+            <td th:text="${f.id}"></td>
+            <td th:text="${f.title}"></td>
+            <td class="route"><code th:text="${f.route.method}"></code> <code th:text="${f.route.path}"></code></td>
+            <td th:text="${f.confidence}"></td>
+            <td><span th:each="t : ${f.tags}" th:text="${t}" style="margin-right:.3rem" class="muted"></span></td>
+            <td>
+              <details>
+                <summary>Evidence / Рекомендации</summary>
+                <div>
+                  <div><strong>Evidence:</strong></div>
+                  <pre th:text="${#objects.toString(f.evidence)}"></pre>
+                  <div><strong>Remediation:</strong></div>
+                  <ul>
+                    <li th:each="r : ${f.remediation}" th:text="${r}"></li>
+                  </ul>
+                </div>
+              </details>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const q = document.getElementById('q');
+      const fh = document.getElementById('fHigh');
+      const fm = document.getElementById('fMed');
+      const fl = document.getElementById('fLow');
+      const rows = () => Array.from(document.querySelectorAll('#tbl tbody tr'));
+      function apply(){
+        const needle = (q.value||'').toLowerCase();
+        rows().forEach(tr => {
+          const sev = tr.getAttribute('data-sev');
+          const sevOk = (sev==='HIGH' && fh.checked) || (sev==='MEDIUM' && fm.checked) || (sev==='LOW' && fl.checked);
+          const text = tr.innerText.toLowerCase();
+          const match = !needle || text.includes(needle);
+          tr.style.display = (sevOk && match) ? '' : 'none';
+        });
+      }
+      [q,fh,fm,fl].forEach(el => el && el.addEventListener('input', apply));
+      apply();
+    })();
+  </script>
 </body>
 </html>
-
