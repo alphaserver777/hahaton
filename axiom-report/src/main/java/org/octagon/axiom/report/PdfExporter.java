@@ -11,9 +11,13 @@ import java.nio.file.Path;
 public final class PdfExporter {
   public void exportFromHtml(Path htmlFile, Path pdfOut) throws IOException {
     String html = Files.readString(htmlFile, StandardCharsets.UTF_8);
+    // Санитизация: вырезаем скрипты и input‑контролы, чтобы избежать багов рендерера и сделать PDF статичным
+    String safe = html
+        .replaceAll("(?is)<script[^>]*>.*?</script>", "")
+        .replaceAll("(?is)<input[^>]*/?>", "");
     try (var os = new FileOutputStream(pdfOut.toFile())) {
       var builder = new PdfRendererBuilder();
-      builder.withHtmlContent(html, htmlFile.getParent().toUri().toString());
+      builder.withHtmlContent(safe, htmlFile.getParent().toUri().toString());
       builder.toStream(os);
       builder.useFastMode();
       builder.run();
@@ -22,4 +26,3 @@ public final class PdfExporter {
     }
   }
 }
-

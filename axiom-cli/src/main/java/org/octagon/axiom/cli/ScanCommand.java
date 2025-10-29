@@ -11,6 +11,8 @@ import org.octagon.axiom.openapi.OpenApiLoader;
 import org.octagon.axiom.openapi.ContractValidators;
 import org.octagon.axiom.checks.BrokenAuthCheck;
 import org.octagon.axiom.checks.PlaceholderChecks;
+import org.octagon.axiom.checks.SecurityHeadersCheck;
+import org.octagon.axiom.checks.InjectionCheck;
 import org.octagon.axiom.report.*;
 
 @CommandLine.Command(name="scan", description = "Сканирование API по OpenAPI и генерация отчётов")
@@ -19,6 +21,8 @@ public class ScanCommand implements Runnable {
   @CommandLine.Option(names = "--base-url", required = true) String baseUrl;
   @CommandLine.Option(names = "--config", defaultValue = "axiom.yaml") String configPath;
   @CommandLine.Option(names = "--out", defaultValue = "dist/out") String outDir;
+  @CommandLine.Option(names = "--save-exchanges-dir", description = "Каталог для сохранения всех запрос/ответов (по умолчанию RUN/exchanges)")
+  String exchangesDir;
 
   private final ObjectMapper yaml = new ObjectMapper(new YAMLFactory());
 
@@ -35,11 +39,15 @@ public class ScanCommand implements Runnable {
           auth.add(new AuthProfile(cfg.target.auth.type, t.role, Map.of("value", envOrValue(t.value))));
         }
       }
+      Map<String,Object> extras = new java.util.HashMap<>();
+      if (cfg.checks != null && cfg.checks.wordlists != null && cfg.checks.wordlists.injections != null) {
+        extras.put("injectionsPath", cfg.checks.wordlists.injections);
+      }
       TargetContext ctx = new TargetContext(
           java.net.URI.create(cfg.target.baseUrl),
           auth,
           new ExecutionProfile(cfg.execution.concurrency, cfg.execution.rateLimitRps, cfg.execution.timeoutMs, cfg.execution.retries),
-          Map.of()
+          extras
       );
 
       var loader = new OpenApiLoader();
@@ -48,24 +56,51 @@ public class ScanCommand implements Runnable {
       var checks = new ArrayList<AxiomCheck>();
       checks.add(new BrokenAuthCheck());
       checks.add(new PlaceholderChecks.BolaCheck());
-      checks.add(new PlaceholderChecks.InjectionCheck());
+      checks.add(new InjectionCheck());
       checks.add(new PlaceholderChecks.ExcessiveDataExposureCheck());
       checks.add(new PlaceholderChecks.RateLimitCheck());
-      checks.add(new PlaceholderChecks.SecurityHeadersCheck());
+      checks.add(new SecurityHeadersCheck());
 
       var engine = new ScanEngine(new HttpExecutor(ctx.exec()), checks, ContractValidators.basic());
-      var report = engine.run(model, ctx);
+      var outcome = engine.runDetailed(model, ctx);
+      var report = outcome.report();
 
-      Path out = Path.of(cfg.report.outDir);
-      Files.createDirectories(out);
-      new JsonReportWriter().write(report, out.resolve("report.json"));
-      new HtmlReportRenderer().render(report, out.resolve("report.html"));
-      new PdfExporter().exportFromHtml(out.resolve("report.html"), out.resolve("report.pdf"));
-      System.out.println("OK: reports in " + out.toAbsolutePath());
+      Path baseOut = Path.of(cfg.report.outDir);
+      Path runDir = nextRunDir(baseOut);
+      Files.createDirectories(runDir);
+      new JsonReportWriter().write(report, runDir.resolve("report.json"));
+      new HtmlReportRenderer().render(report, runDir.resolve("report.html"));
+      try {
+        new PdfExporter().exportFromHtml(runDir.resolve("report.html"), runDir.resolve("report.pdf"));
+      } catch (Exception pdfErr) {
+        System.err.println("PDF export warning: " + pdfErr.getMessage());
+      }
+      // Сохраняем все запросы/ответы по эндпоинтам в отдельную папку
+      if (exchangesDir != null && !exchangesDir.isBlank()) {
+        new org.octagon.axiom.report.ExchangesWriter().writeAll(outcome.results(), Path.of(exchangesDir));
+      } else {
+        new org.octagon.axiom.report.ExchangesWriter().writeAll(outcome.results(), runDir.resolve("exchanges"));
+      }
+      System.out.println("OK: run dir " + runDir.toAbsolutePath());
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
     }
+  }
+
+  private static Path nextRunDir(Path baseOut) throws java.io.IOException {
+    Files.createDirectories(baseOut);
+    int max = 0;
+    try (var s = java.nio.file.Files.list(baseOut)) {
+      for (var p : s.toList()) {
+        String name = p.getFileName().toString();
+        if (name.startsWith("run-")) {
+          try { max = Math.max(max, Integer.parseInt(name.substring(4))); } catch (NumberFormatException ignored) {}
+        }
+      }
+    }
+    int next = max + 1;
+    return baseOut.resolve(String.format("run-%03d", next));
   }
 
   private static String envOrValue(String val) {
@@ -81,4 +116,3 @@ public class ScanCommand implements Runnable {
     return val;
   }
 }
-

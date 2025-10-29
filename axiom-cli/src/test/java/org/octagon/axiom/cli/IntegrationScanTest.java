@@ -18,9 +18,14 @@ public class IntegrationScanTest {
     );
     // CommandLine returns 0 on success (we do not System.exit in success path)
     assertThat(code).isEqualTo(0);
-    assertThat(Files.exists(out.resolve("report.json"))).isTrue();
-    assertThat(Files.exists(out.resolve("report.html"))).isTrue();
-    assertThat(Files.exists(out.resolve("report.pdf"))).isTrue();
+    // Reports are written under run-XXX subdir now
+    try (var s = Files.list(out)) {
+      var run = s.filter(p -> p.getFileName().toString().startsWith("run-")).findFirst();
+      assertThat(run).isPresent();
+      var rd = run.get();
+      assertThat(Files.exists(rd.resolve("report.json"))).isTrue();
+      assertThat(Files.exists(rd.resolve("report.html"))).isTrue();
+      assertThat(Files.exists(rd.resolve("report.pdf"))).isTrue();
+    }
   }
 }
-

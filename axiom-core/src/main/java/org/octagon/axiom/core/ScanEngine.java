@@ -16,6 +16,10 @@ public final class ScanEngine {
   }
 
   public Report run(OpenApiModel oas, TargetContext ctx) {
+    return runDetailed(oas, ctx).report();
+  }
+
+  public ScanOutcome runDetailed(OpenApiModel oas, TargetContext ctx) {
     long t0 = System.currentTimeMillis();
     var testCases = checks.stream().flatMap(c -> c.generate(oas, ctx)).toList();
     var results = testCases.parallelStream()
@@ -34,7 +38,8 @@ public final class ScanEngine {
 
     var findings = checks.stream().flatMap(c -> c.analyze(results.stream(), ctx)).toList();
     var summary = summarize(findings, t0, testCases.size());
-    return new Report(meta(ctx), summary, findings);
+    var report = new Report(meta(ctx), summary, findings);
+    return new ScanOutcome(report, results);
   }
 
   private static Map<String, Object> meta(TargetContext ctx) {
@@ -53,4 +58,3 @@ public final class ScanEngine {
     return new ReportSummary(high, med, low, dur, endpoints);
   }
 }
-

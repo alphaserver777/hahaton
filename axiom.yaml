@@ -9,9 +9,9 @@ target:
       - role: admin
         value: ${AUTH_TOKEN_ADMIN:}
 execution:
-  concurrency: 8
-  rateLimitRps: 8
-  timeoutMs: 8000
+  concurrency: 16
+  rateLimitRps: 16
+  timeoutMs: 10000
   retries: 1
 checks:
   severityThreshold: MEDIUM
@@ -29,4 +29,3 @@ ui:
   enabled: true
   bind: 0.0.0.0
   port: 8080
-

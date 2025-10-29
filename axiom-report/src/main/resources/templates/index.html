@@ -46,9 +46,9 @@
       </div>
       <div class="toolbar">
         <div class="filters">
-          <label><input type="checkbox" id="fHigh" checked /> HIGH</label>
-          <label><input type="checkbox" id="fMed" checked /> MEDIUM</label>
-          <label><input type="checkbox" id="fLow" checked /> LOW</label>
+          <label><input type="checkbox" id="fHigh" checked="checked" /> HIGH</label>
+          <label><input type="checkbox" id="fMed" checked="checked" /> MEDIUM</label>
+          <label><input type="checkbox" id="fLow" checked="checked" /> LOW</label>
         </div>
         <input type="search" id="q" placeholder="Фильтр по названию/маршруту/тегам" />
       </div>
@@ -82,7 +82,7 @@
                 <summary>Evidence / Рекомендации</summary>
                 <div>
                   <div><strong>Evidence:</strong></div>
-                  <pre th:text="${#objects.toString(f.evidence)}"></pre>
+                  <pre th:text="${#strings.escapeXml(f.evidence)}"></pre>
                   <div><strong>Remediation:</strong></div>
                   <ul>
                     <li th:each="r : ${f.remediation}" th:text="${r}"></li>
@@ -97,6 +97,7 @@
   </main>
 
   <script>
+  /*<![CDATA[*/
     (function(){
       const q = document.getElementById('q');
       const fh = document.getElementById('fHigh');
@@ -116,6 +117,7 @@
       [q,fh,fm,fl].forEach(el => el && el.addEventListener('input', apply));
       apply();
     })();
+  /*]]>*/
   </script>
 </body>
 </html>

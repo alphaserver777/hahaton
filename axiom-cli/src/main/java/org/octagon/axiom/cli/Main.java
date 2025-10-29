@@ -9,7 +9,8 @@ import picocli.CommandLine;
     subcommands = {
         ScanCommand.class,
         FuzzCommand.class,
-        CiCommand.class
+        CiCommand.class,
+        DiscoveryCommand.class
     }
 )
 public class Main implements Runnable {
@@ -18,4 +19,3 @@ public class Main implements Runnable {
   }
   @Override public void run() { new CommandLine(new Main()).usage(System.out); }
 }
-
